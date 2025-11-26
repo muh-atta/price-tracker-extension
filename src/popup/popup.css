@@ -1,40 +1,95 @@
+/* Reset and base styles */
+#popup-root {
+  width: 100%;
+  min-height: 400px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Ensure consistent sizing */
+* {
+  box-sizing: border-box;
+}
+
+/* Custom styles that complement Tailwind */
 .popup-container {
-  width: 300px;
-  min-height: 200px;
-  padding: 20px;
-  background-color: #f5f5f5;
-  font-family: Arial, sans-serif;
+  width: 100%;
+  min-height: 400px;
+  background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
 }
 
-.popup-title {
-  color: #333;
-  text-align: center;
-  margin-bottom: 10px;
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
 }
 
-.popup-subtitle {
-  color: #666;
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 14px;
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
 }
 
-.button-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+::-webkit-scrollbar-thumb {
+  background: #c7d2fe;
+  border-radius: 3px;
 }
 
-.popup-button {
-  padding: 10px 15px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
+::-webkit-scrollbar-thumb:hover {
+  background: #818cf8;
 }
 
-.popup-button:hover {
-  background-color: #0056b3;
+/* Input focus ring override */
+input:focus-visible {
+  outline: 2px solid #6366f1 !important;
+  outline-offset: 0 !important;
+}
+
+/* Button transitions */
+button {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Shadow depth enhancement */
+.shadow-depth {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Fade in animation for dropdown */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Smooth hover effects */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Pulse animation for active elements */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+}
+
+.pulse {
+  animation: pulse 2s infinite;
 }

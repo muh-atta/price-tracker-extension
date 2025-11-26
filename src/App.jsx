@@ -7,19 +7,20 @@ export default function App() {
   const [isPopup, setIsPopup] = useState(false);
 
   useEffect(() => {
+    // Check if we're in popup mode (small window) or fullscreen mode
     const width = window.innerWidth;
-
     setIsPopup(width < 600);
   }, []);
 
   return (
     <Router>
       <Routes>
-        {isPopup ? (
-          <Route path="/" element={<PopupView />} />
-        ) : (
-          <Route path="/watchlist" element={<WatchlistView />} />
-        )}
+        {/* Popup view for browser extension */}
+        <Route path="/" element={<PopupView />} />
+        {/* Full dashboard view */}
+        <Route path="/watchlist" element={<WatchlistView />} />
+        {/* Default route redirects to appropriate view */}
+        <Route path="*" element={isPopup ? <PopupView /> : <WatchlistView />} />
       </Routes>
     </Router>
   );
