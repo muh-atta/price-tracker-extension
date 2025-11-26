@@ -1,0 +1,272 @@
+console.log("Price Monitor :: product page script loaded");
+
+// ----------- Site-specific functions -----------
+const siteHandlers = {
+  amazon: {
+    match: () => window.location.hostname.includes("amazon"),
+    getPrice: () => {
+      const wholeEl = document.querySelector(".a-price-whole");
+      const fractionEl = document.querySelector(".a-price-fraction");
+      const symbolEl = document.querySelector(".a-price-symbol");
+
+      if (!wholeEl) return null;
+
+      const whole = wholeEl.textContent.replace(/\D/g, "");
+      const fraction = fractionEl
+        ? fractionEl.textContent.replace(/\D/g, "") || "00"
+        : "00";
+      const symbol = symbolEl ? symbolEl.textContent.trim() : "$";
+
+      const price = parseFloat(`${whole}.${fraction}`);
+
+      return { price, symbol };
+    },
+    injectButton: (price) => {
+      if (document.querySelector(".pm-watch-btn-wrapper")) return;
+      const wrapper = document.createElement("div");
+      wrapper.className = "pm-watch-btn-wrapper";
+      wrapper.style.cssText = "margin-top:12px; width:100%;";
+
+      const watchBtn = document.createElement("button");
+      watchBtn.className = "pm-watch-btn a-button a-button-primary a-button-icon";
+      watchBtn.type = "button";
+      watchBtn.innerHTML = `<span class="a-button-inner"><span class="a-button-text">Watch Price</span></span>`;
+      watchBtn.style.cssText = "width:100%; font-size:14px; cursor:pointer; margin-top:-5px;";
+
+      const url = window.location.href;
+      watchBtn.addEventListener("click", () => {
+        chrome.runtime.sendMessage({
+          action: "ADD_PRODUCT_FROM_AMAZON",
+          price,
+          url,
+        });
+
+        watchBtn.innerHTML = `<span class="a-button-inner"><span class="a-button-text" style="color:white;">Added!</span></span>`;
+        watchBtn.style.backgroundColor = "#0057ffed";
+        watchBtn.style.color = "white";
+      });
+
+      wrapper.appendChild(watchBtn);
+
+      const buyNowDiv = document.querySelector("#buyNow_feature_div");
+      if (buyNowDiv) buyNowDiv.insertAdjacentElement("afterend", wrapper);
+    },
+  },
+  daraz: {
+    match: () => window.location.hostname.includes("daraz"),
+    getPrice: () => {
+  const priceEl = document.querySelector(
+    "#module_product_price_1 > div > div.pdp-product-price > span"
+  );
+  if (!priceEl) return null;
+  let raw = priceEl.textContent.trim(); // e.g. "Rs. 3,600"
+  const match = raw.match(/^([^\d]+)?([\d,\.]+)/);
+  if (!match) return null;
+
+  const symbol = match[1] ? match[1].trim() : ""; // e.g. "Rs."
+  let amountStr = match[2];                        // e.g. "3,600"
+  amountStr = amountStr.replace(/,/g, "");
+  const price = parseFloat(amountStr);
+  return { price, symbol };
+},
+  injectButton: (price) => {
+  if (document.querySelector(".pm-watch-btn")) return;
+
+  const url = window.location.href;
+
+  const watchBtn = document.createElement("button");
+  watchBtn.className = "pm-watch-btn pdp-button pdp-button_type_text pdp-button_theme_yellow pdp-button_size_xl";
+  watchBtn.type = "button";
+  watchBtn.innerHTML = `<span class="pdp-button-text"><span>Watch Price</span></span>`;
+  watchBtn.style.cssText = `
+    background-color: green;
+    color: white;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    padding: 0 12px;
+    height: 44px;
+    font-size: 14px;
+    width: 80%;
+    box-sizing: border-box;
+    margin-top: 6px;
+  `;
+
+  watchBtn.addEventListener("click", () => {
+    chrome.runtime.sendMessage({
+      action: "ADD_PRODUCT_FROM_DARAZ",
+      price,
+      url,
+    });
+
+    watchBtn.innerHTML = `<span class="pdp-button-text"><span>Added!</span></span>`;
+    watchBtn.style.backgroundColor = "#0057ff";
+    watchBtn.style.color = "white";
+  });
+
+  const container = document.querySelector("#module_add_to_cart .pdp-cart-concern");
+  if (container) {
+    container.style.display = "flex";
+    container.style.flexDirection = "column";
+    container.style.alignItems = "stretch";
+
+    const existingButtons = container.querySelectorAll("button");
+    existingButtons.forEach(btn => {
+      btn.style.width = "80%";
+      btn.style.boxSizing = "border-box";
+      btn.style.marginTop = "6px";
+    });
+
+    container.appendChild(watchBtn);
+  }
+}
+  },
+  ebay: {
+  match: () => window.location.hostname.includes("ebay"),
+  
+  getPrice: () => {
+  const priceEl = document.querySelector(
+    "#mainContent > div > div.vim.x-price-section.mar-t-20 > div.vim.x-bin-price > div > div.x-price-primary > span"
+  );
+   const titleEl = document.querySelector(
+    "#mainContent > div > div.vim.x-item-title > h1 > span"
+  );
+  const title = titleEl ? titleEl.textContent.trim() : "";
+  if (!priceEl) return null;
+
+  const rawText = priceEl.textContent.trim();
+
+  const match = rawText.match(/^([^\d]+)?([\d,.]+)/);
+  if (!match) return null;
+
+  const currency = match[1] ? match[1].trim() : "";
+  let amountStr = match[2];
+  amountStr = amountStr.replace(/,/g, "");
+  const price = parseFloat(amountStr);
+
+  return { title, price, currency };
+},
+injectButton: (price) => {
+    console.log("ebay.........")
+    const ulContainer = document.querySelector(".x-buybox-cta");
+    if (!ulContainer || ulContainer.querySelector(".pm-watch-li")) return;
+
+    const url = window.location.href;
+
+    const watchlistLi = ulContainer.querySelector(".x-watch-action");
+    if (!watchlistLi) return;
+
+    const li = document.createElement("li");
+    li.className = "pm-watch-li";
+    li.style.marginTop = "6px";
+
+    const btn = document.createElement("a");
+    btn.className = "ux-call-to-action fake-btn fake-btn--fluid fake-btn--large fake-btn--primary";
+    btn.href = "#";
+    btn.innerHTML = `<span class="ux-call-to-action__cell"><span class="ux-call-to-action__text">Watch Price</span></span>`;
+    btn.style.backgroundColor = "white";
+    btn.style.color = "#0968f6";
+    btn.style.textAlign = "center";
+    btn.style.display = "block";
+    btn.style.fontWeight = 100;
+    btn.style.padding = "10px 16px";
+    btn.style.borderRadius = "999px";
+    btn.style.cursor = "pointer";
+    btn.style.transition = "all 0.2s ease";
+
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      chrome.runtime.sendMessage({
+        action: "ADD_EBAY_OPTION",
+        price,
+        url,
+      });
+      btn.innerHTML = `<span class="ux-call-to-action__cell"><span class="ux-call-to-action__text">Added!</span></span>`;
+      btn.style.backgroundColor = "#0057ff";
+      btn.style.color = "#fff";
+    });
+
+    li.appendChild(btn);
+
+    watchlistLi.insertAdjacentElement("afterend", li);
+}
+},
+dhgate: {
+  match: () => window.location.hostname.includes("dhgate"),
+  
+  getPrice: () => {
+  const priceEl = document.querySelector(
+    "#productContent > div > div:nth-child(4) > div > div.productMain_productMain__AVkr2 > div.productMain_productMainRight__ZVyY1 > div > div.productInfo_productInfo__V8sBz > div.productPrice_priceWarp__rWYY7 > div > b"
+  );
+   const titleEl = document.querySelector(
+    "#productContent > div > div:nth-child(4) > div > div.productMain_productMain__AVkr2 > div.productMain_productMainRight__ZVyY1 > div > div.productInfo_productInfo__V8sBz > div.productInfo_productInfoTitle__5sgml > h1"
+  );
+  const title = titleEl ? titleEl.textContent.trim() : "";
+
+  const rawText = priceEl.textContent.trim();
+
+  const match = rawText.match(/^([^\d]+)?([\d,.]+)/);
+
+  const currency = match[1] ? match[1].trim() : "";
+  let amountStr = match[2];
+  amountStr = amountStr.replace(/,/g, "");
+  const price = parseFloat(amountStr);
+
+  console.log( { title, price, currency });
+  return { title, price, currency };
+},
+injectButton: (price) => {
+    const container = document.querySelector(".productInfo_buyBtnWarp__s6tkt");
+    if (!container || container.querySelector(".pm-watch-btn")) return;
+
+    const url = window.location.href;
+    const watchlistBtn = document.createElement("button");
+    watchlistBtn.className = "pm-watch-btn";
+    watchlistBtn.type = "button";
+    watchlistBtn.innerText = "Add to Watchlist";
+    watchlistBtn.style.cssText = `
+        background-color: rgb(254, 214, 0);
+        color: #000;
+        font-weight: 100;
+        padding: 10px 16px;
+        border-radius: 999px;
+        cursor: pointer;
+        display: block;
+        width: 100%;
+        margin-top: 6px;
+        text-align: center;
+        font-weight: bold;
+        transition: all 0.2s ease;
+        margin-left: 18px;
+    `;
+    watchlistBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        chrome.runtime.sendMessage({
+            action: "ADD_DHGATE_OPTION",
+            price,
+            url,
+        });
+        watchlistBtn.innerText = "Added!";
+        watchlistBtn.style.backgroundColor = "#0057ff";
+        watchlistBtn.style.color = "#fff";
+    });
+    container.appendChild(watchlistBtn);
+}
+}
+};
+
+function injectWatchButton() {
+  for (const siteKey in siteHandlers) {
+    const handler = siteHandlers[siteKey];
+    if (handler.match()) {
+      const price = handler.getPrice();
+      if (price) handler.injectButton(price);
+    }
+  }
+}
+
+// ---------- Load & Mutation Observer ----------
+window.addEventListener("load", () => setTimeout(injectWatchButton, 1000));
+
+const observer = new MutationObserver(() => injectWatchButton());
+observer.observe(document.body, { childList: true, subtree: true });
