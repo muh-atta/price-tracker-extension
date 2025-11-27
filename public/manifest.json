@@ -3,6 +3,9 @@
   "name": "Price Monitor",
   "version": "1.0",
   "description": "Track price drops",
+  "icons": {
+    "128": "icon.png"
+  },
   "permissions": [
   "storage",
   "alarms",

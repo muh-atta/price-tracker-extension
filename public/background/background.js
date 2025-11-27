@@ -33,14 +33,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   chrome.storage.local.set({ [key]: list }, () => {
     console.log("Updated price for existing entry:", list[index]);
   });
+  chrome.notifications.create({
+  type: "basic",
+  iconUrl: "icon.png",
+  title: "Price Drop Alert!",
+  message: `Product price dropped!`,
+  priority: 2
+});
 }
-
   });
-
   sendResponse({ success: true });
 };
-
-
 
   if (action === "ADD_PRODUCT_FROM_AMAZON") saveToList("amazon_watchList");
   if (action === "ADD_PRODUCT_FROM_DARAZ") saveToList("daraz_watchList");
@@ -60,7 +63,7 @@ async function handleProductAlarm(productUrl) {
       for (let item of list) {
         if (item.url === productUrl) {
           try {
-            getAmazonPrice(productUrl, key, item.price.price)
+            getPrice(productUrl, key, item.price.price)
           } catch (error) {
             console.error("Error fetching product:", error);
           }
@@ -77,7 +80,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   handleProductAlarm(alarm.name); 
 });
 
-async function getPrice(url) {
+async function getPrice(url, key, price) {
   const res = await fetch(url);
   const htmlText = await res.text();
 
@@ -93,16 +96,16 @@ async function getPrice(url) {
       action: "ADD_PRODUCT_PRICE",
       htmlText: htmlText,
       url:url,
-      price:'3572',
-      key:'daraz'
+      price:price,
+      key:key
     }, resolve);
   });
   return contentResponse;
 }
 
 // Usage
-const url = 'https://www.daraz.pk/products/-i781863272-s3635736749.html?pvid=8d36b223-3825-47db-a026-ad73e37a246e&search=jfy&scm=1007.51705.446532.0&spm=a2a0e.tm80335142.just4u.d_781863272'
-setInterval(async () => {
-  const response = await getPrice(url);
-  console.log("Got data:", response);
-}, 5000);
+// const url = 'https://www.dhgate.com/product/oem-2025-new-pro3-usa-stock-for-apple-airpods/1081813594.html?dspm=pcen.hp.topranking.3.Q2IXTHF4SGNDlQZ6XD1G&resource_id=1081813594&scm_id=undefined&skuId=1443364227917094949'
+// setInterval(async () => {
+//   const response = await getPrice(url, 'ADD_DHGATlllE_OPTION', '14.6');
+//   console.log("Got data:", response);
+// }, 5000);

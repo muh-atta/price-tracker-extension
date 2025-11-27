@@ -216,8 +216,9 @@ const siteHandlers =  {
   match: () => window.location.hostname.includes("dhgate"),
   getPrice: () => {
   const priceEl = document.querySelector(
-    "#productContent > div > div:nth-child(4) > div > div.productMain_productMain__AVkr2 > div.productMain_productMainRight__ZVyY1 > div > div.productInfo_productInfo__V8sBz > div.productPrice_priceWarp__rWYY7 > div > b"
+    "#productContent > div > div:nth-child(3) > div > div.productMain_productMain__AVkr2 > div.productMain_productMainRight__ZVyY1 > div > div.prodTotal_prodTotalWrap__igF18 > div > div.prodTotal_prodTotal___vdH_ > div.prodTotal_total__dSPWE"
   );
+  if(!priceEl) return;
   const rawText = priceEl.textContent.trim();
   const match = rawText.match(/^([^\d]+)?([\d,.]+)/);
   const symbol = match[1] ? match[1].trim() : "";
@@ -231,12 +232,11 @@ const siteHandlers =  {
   injectButton: async (price) => {
       const container = document.querySelector(".productInfo_buyBtnWarp__s6tkt");
       if (!container || container.querySelector(".pm-watch-btn")) return;
-
+     console.log("injecting ...............")
     const url = window.location.href;
-    const titleEl = document.querySelector(
+    const title = document.querySelector(
     "#productContent > div > div:nth-child(4) > div > div.productMain_productMain__AVkr2 > div.productMain_productMainRight__ZVyY1 > div > div.productInfo_productInfo__V8sBz > div.productInfo_productInfoTitle__5sgml > h1"
     );
-    const title = titleEl ? titleEl.textContent.trim() : "";
     const watchlistBtn = document.createElement("button");
     watchlistBtn.className = "pm-watch-btn";
     watchlistBtn.type = "button";
@@ -311,15 +311,34 @@ observer.observe(document.body, { childList: true, subtree: true });
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.action === "ADD_PRODUCT_PRICE") {
     console.log("Received in content script:", message);
-    if(message.key === 'daraz'){
+    if(message.key === 'ADD_DHGATE_OPTION'){
+    const res = await getDhGatePrice(message)
+    console.log("res........", res)
+    sendResponse({ res });
+    return true;
+    }
+
+    if(message.key === 'ADD_PRODUCT_FROM_AMAZON'){
+    const res = await getAmazonPrice(message)
+    console.log("res........", res)
+    sendResponse({ res });
+    return true;
+    }
+
+    if(message.key === 'ADD_PRODUCT_FROM_DARAZ'){
     const res = await getDarazPrice(message)
     console.log("res........", res)
     sendResponse({ res });
     return true;
     }
-    // const res = await getAmazonPrice(message)
+
+    if(message.key === 'ADD_EBAY_OPTION'){
+    const res = await getEbayPrice(message)
     console.log("res........", res)
     sendResponse({ res });
+    return true;
+    }
+    
     return true;
   }
 });
@@ -329,9 +348,10 @@ function parseHTML(html) {
   return parser.parseFromString(html, "text/html");
 }
 
-async function getAmazonPrice(message) {
+async function getAmazonPrice(message) {  
+  const url = message.url;
   const doc = parseHTML(message.htmlText);
-  console.log("doc.......", doc)
+  console.log("doc.......", doc);
   const wholeEl = doc.querySelector(".a-price-whole");
   const fractionEl = doc.querySelector(".a-price-fraction");
   const symbolEl = doc.querySelector(".a-price-symbol");
@@ -345,8 +365,8 @@ async function getAmazonPrice(message) {
   console.log("message.price < price", message.price < price, "data..................")
    if(message.price < price){
       chrome.runtime.sendMessage({
-      action: "getamazonrepsonse",
-      data: {url, price, symbol }
+      action: "ADD_PRODUCT_FROM_AMAZON",
+      url, price:'24', title:''
     })
   }
     return {price, symbol }
@@ -372,4 +392,53 @@ async function getDarazPrice(message) {
     })
   }
     return {action:'', price:'', url, title:'', triggered}
+}
+
+async function getDhGatePrice(message) {
+  const doc = parseHTML(message.htmlText);
+  console.log("getDhGatePrice doc.......")
+   const priceEl = doc.querySelector(
+    "#productContent > div > div:nth-child(4) > div > div.productMain_productMain__AVkr2 > div.productMain_productMainRight__ZVyY1 > div > div.productInfo_productInfo__V8sBz > div.productPrice_priceWarp__rWYY7 > div > b"
+  );
+  const rawText = priceEl.textContent.trim();
+  const match = rawText.match(/^([^\d]+)?([\d,.]+)/);
+  let price = match[2];
+
+  console.log("getDhGatePrice    message.price < price", message.price < price, "data..................")
+
+
+   if(message.price < price){
+      chrome.runtime.sendMessage({
+      action: "ADD_DHGATE_OPTION",
+      price, url, title:''
+    })
+  }
+    return {price, symbol }
+}
+
+async function getEbayPrice(message) {
+  const document = parseHTML(message.htmlText);
+  const url = message.url;
+  const priceEl = document.querySelector(
+      "#mainContent > div > div.vim.x-price-section.mar-t-20 > div.vim.x-bin-price > div > div.x-price-primary > span"
+    );
+    console.log("getEbayPrice............", priceEl)
+  if (!priceEl) return null;
+
+  const rawText = priceEl.textContent.trim();
+
+  const match = rawText.match(/^([^\d]+)?([\d,.]+)/);
+  if (!match) return null;
+
+  let amountStr = match[2];
+  amountStr = amountStr.replace(/,/g, "");
+  const price = parseFloat(amountStr);
+  console.log("price.....", price, "message.price", message.price, "price < message.price", message.price > price )
+   if( price < message.price){
+      chrome.runtime.sendMessage({
+      action: "ADD_EBAY_OPTION",
+      price, url, title:''
+    })
+  }
+    return {action:'', price:'', url, title:''}
 }

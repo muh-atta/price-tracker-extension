@@ -312,15 +312,6 @@ useEffect(() => {
             
             <NavItem Icon={TrendingUp} label="Price Alerts" />
           </nav>
-
-          {isSidebarOpen && (
-            <div className="absolute bottom-4 left-4 right-4">
-              <button className="w-full flex items-center justify-center py-3 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition duration-150">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Item
-              </button>
-            </div>
-          )}
         </aside>
 
         {/* Main Content */}
@@ -354,10 +345,6 @@ useEffect(() => {
                   ? `${activeStore.charAt(0).toUpperCase() + activeStore.slice(1)} Tracked Items` 
                   : "All Tracked Items"}
               </h3>
-              <button className="flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800">
-                <Plus className="w-4 h-4 mr-1" />
-                Add New
-              </button>
             </div>
             
             <div className="overflow-x-auto">
@@ -411,7 +398,7 @@ useEffect(() => {
         {/* Current Price */}
         <td className="px-6 py-4 w-1/6">
           <div className="text-sm font-semibold text-gray-900 truncate">
-            {item.price.symbol} {item.price.price.toFixed(2)}
+            {item.price.symbol} {item.price.price}
           </div>
         </td>
 
