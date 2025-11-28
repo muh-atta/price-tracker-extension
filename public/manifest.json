@@ -14,7 +14,7 @@
   "activeTab"
   ],
   "background": {
-    "service_worker": "background/background.js",
+    "service_worker": "background.js",
     "type": "module"
   },
   "action": {
@@ -23,7 +23,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content/contentScript.js"]
+      "js": ["contentScript.js"]
     }
   ],
   "web_accessible_resources": [

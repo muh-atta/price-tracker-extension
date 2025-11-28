@@ -166,9 +166,9 @@ useEffect(() => {
   }
 
   const filteredItems = displayItems.filter(item =>
-    item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.store?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  (item.title?.toString().toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+  (item.store?.toString().toLowerCase() || "").includes(searchTerm.toLowerCase())
+);
 
   const NavItem = ({ Icon, label, isActive = false, hasDropdown = false, isDropdownOpen = false, onClick }) => (
     <div 
@@ -366,8 +366,9 @@ useEffect(() => {
         {/* Product */}
         <td className="px-6 py-4 max-w-sm overflow-hidden">
           <div className="flex flex-col">
-            <div className="text-sm font-medium text-gray-900 truncate" title={item.title}>
-              {item.title}
+            <div className="text-sm font-medium text-gray-900 truncate" title={item?.title ||""}>
+              {item?.title || ""}
+
             </div>
             <div className="text-sm text-gray-500">{getTimeAgo(item.addedAt)}</div>
           </div>
@@ -397,9 +398,9 @@ useEffect(() => {
 
         {/* Current Price */}
         <td className="px-6 py-4 w-1/6">
-          <div className="text-sm font-semibold text-gray-900 truncate">
-            {item.price.symbol} {item.price.price}
-          </div>
+        <div className="text-sm font-semibold text-gray-900 truncate">
+          {item?.price?.symbol ?? "$"} {item?.price?.price ?? "0.00"}
+        </div>
         </td>
 
         {/* Alert Price */}
